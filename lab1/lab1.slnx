@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="../BaseRepositories/BaseRepositories.csproj" />
+  <Project Path="../Course/Course.csproj" />
+  <Project Path="../Group/Group.csproj" />
+  <Project Path="../Student/Student.csproj" />
+  <Project Path="../Teacher/Teacher.csproj" />
+  <Project Path="lab1.csproj" />
+</Solution>
