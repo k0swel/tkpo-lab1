@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Student.Services.StudentLifecycle
+namespace Student.Services
 {
     public class StudentLifeCycle
     {
@@ -24,7 +24,16 @@ namespace Student.Services.StudentLifecycle
             await _repository.UpdateAsync(student_object);
             return;
         }
-
+        public async Task Restore(StudentID id)
+        {
+            Entities.Student? student_object = await _repository.FindByIDAsync(id);
+            if (student_object is null)
+            {
+                throw new Entities.StudentDoesNotExistsError($"A student with specified ID({id}) does not exists in the repo");
+            }
+            student_object.Restore();
+            await _repository.UpdateAsync(student_object);
+        }
         public async Task GoOnVacation(StudentID id)
         {
             Entities.Student? student_object = await _repository.FindByIDAsync(id);

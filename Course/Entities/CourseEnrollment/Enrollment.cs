@@ -11,10 +11,10 @@ namespace Course.Entities
 {
     public record Enrollment : BaseRepositories.Interfaces.Entity<EnrollmentID> {
         public EnrollmentID Id { get; set; }
-        public StudentID? Student;
-        public GroupID? Group;
+        public StudentID? Student = null;
+        public GroupID? Group = null;
         public CourseID Course;
-        public TeacherID? Teacher;
+        public TeacherID? Teacher = null;
 
         public Enrollment(CourseID course, GroupID group_id) {
             this.Id = 0;
@@ -38,7 +38,6 @@ namespace Course.Entities
     }
 
     public record EnrollmentID : BaseRepositories.Entities.ID, BaseRepositories.IDInterface<EnrollmentID> {
-        public ulong _value;
         public new object Value => _value;
         public EnrollmentID(ulong Value)
         {
@@ -73,7 +72,6 @@ namespace Course.Entities
 public sealed record CourseID : BaseRepositories.Entities.ID
 {
     public new object Value => _value;
-    private ulong _value;
     public CourseID(ulong Value)
     {
         this._value = Value;

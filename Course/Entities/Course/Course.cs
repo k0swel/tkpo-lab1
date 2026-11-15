@@ -61,9 +61,19 @@ namespace Course.Entities
     };
     public sealed record CourseID: BaseRepositories.Entities.ID, BaseRepositories.IDInterface<CourseID>  {
         public new object Value => _value;
-        private ulong _value;
         public CourseID(ulong Value) {
             this._value = Value;
+        }
+        public CourseID(string _value) {
+            ulong value;
+            try
+            {
+                value = Convert.ToUInt64(_value);
+                this._value = value;
+            }
+            catch (FormatException ) {
+                throw new CourseIDIncorrectFormat($"Incorrect format for CourseID. Just pass a digital identificator. For example: 2");
+            }
         }
         public CourseID() {
             this._value = 0;
@@ -76,6 +86,10 @@ namespace Course.Entities
             return new CourseID(Value._value + 1);
         }
         public static implicit operator CourseID(ulong value) {
+            return new CourseID(value);
+        }
+        public static implicit operator CourseID(string value)
+        {
             return new CourseID(value);
         }
         public override string ToString() {
@@ -94,11 +108,18 @@ namespace Course.Entities
         {
             return coursename_object.Value;
         }
+        public override string ToString() {
+            return this.Value;
+        }
     }
     public sealed record CourseDescription(string Value) {
         public static implicit operator CourseDescription(string text)
         {
             return new CourseDescription(text);
+        }
+        public override string ToString()
+        {
+            return this.Value;
         }
     }
     public enum CourseStatus

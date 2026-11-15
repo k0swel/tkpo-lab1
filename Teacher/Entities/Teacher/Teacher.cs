@@ -64,7 +64,7 @@ namespace Teacher.Entities
         }
         public static TeacherID operator ++(TeacherID Value)
         {
-            return new TeacherID(Value._value++);
+            return new TeacherID(Value._value + 1);
         }
         public static implicit operator TeacherID(ulong value) => new(value);
         public override string ToString()

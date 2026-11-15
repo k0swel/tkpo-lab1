@@ -16,4 +16,6 @@ namespace Course.Entities
     {
         public CourseDoesNotExistsError(string text) : base(text) { }
     };
+    public class CourseIDIncorrectFormat(string text) : Exception(text) { }
+    
 }

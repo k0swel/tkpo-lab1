@@ -15,58 +15,63 @@ namespace Course.Repositories
         private readonly Dictionary<GroupID, HashSet<EnrollmentID>> _byGroup;
         private readonly Dictionary<StudentID, HashSet<EnrollmentID>> _byStudent;
         private readonly Dictionary<TeacherID, HashSet<EnrollmentID>> _byTeacher;
+        private readonly Dictionary<Course.Entities.CourseID, HashSet<EnrollmentID>> _byCourseID;
         public InMemoryCourseEnrollmentRepository() {
             this._byGroup = new();
             this._byStudent = new();
             this._byTeacher = new();
+            this._byCourseID = new();
         }
 
-        public override async Task<EnrollmentID> InsertAsync(Enrollment enrollment_object) {
-            // useless
-            //if (await IsExistsAsync(enrollment_object.Id)) {
-            //    throw new EnrollmentAlreadyExists($"Enrollment with specified ID ({enrollment_object.Id}) already exists");
-            //}
+        public override Task<EnrollmentID> InsertAsync(Enrollment enrollment)
+        {
             lock (_mutex)
             {
-                if (enrollment_object.Student is { } sid && _byStudent.TryGetValue(sid, out var s) && s.Contains(enrollment_object.Id))
-                    throw new EntityAlreadyHasACourseError($"Student ({sid}) already has a course {enrollment_object.Course}");
-                if (enrollment_object.Teacher is { } tid && _byTeacher.TryGetValue(tid, out var t) && t.Contains(enrollment_object.Id))
-                    throw new EntityAlreadyHasACourseError($"Teacher ({tid}) already has a course {enrollment_object.Course}");
-                if (enrollment_object.Group is { } gid && _byGroup.TryGetValue(gid, out var g) && g.Contains(enrollment_object.Id))
-                    throw new EntityAlreadyHasACourseError($"Group ({gid}) already has a course {enrollment_object.Course}");
+                if (enrollment.Student is { } sid
+                    && _byStudent.TryGetValue(sid, out var sSet)
+                    && sSet.Any(id => _database[id].Course == enrollment.Course))
+                    throw new EntityAlreadyHasACourseError(
+                        $"Student ({sid}) already has course {enrollment.Course}");
 
-                EnrollmentID newId = _NextID();
-                enrollment_object.Id = newId;
-                _database.Add(newId, enrollment_object);
-                if (enrollment_object.Student is not null)
-                {
-                    _insertStudent(enrollment_object.Student, enrollment_object.Id);
-                }
-                if (enrollment_object.Teacher is not null)
-                {
-                    _insertTeacher(enrollment_object.Teacher, enrollment_object.Id);
-                }
-                if (enrollment_object.Group is not null)
-                {
-                    _insertGroup(enrollment_object.Group, enrollment_object.Id);
-                }
-                return newId;
+                if (enrollment.Teacher is { } tid
+                    && _byTeacher.TryGetValue(tid, out var tSet)
+                    && tSet.Any(id => _database[id].Course == enrollment.Course))
+                    throw new EntityAlreadyHasACourseError(
+                        $"Teacher ({tid}) already has course {enrollment.Course}");
+
+                if (enrollment.Group is { } gid
+                    && _byGroup.TryGetValue(gid, out var gSet)
+                    && gSet.Any(id => _database[id].Course == enrollment.Course))
+                    throw new EntityAlreadyHasACourseError(
+                        $"Group ({gid}) already has course {enrollment.Course}");
+
+                if (!_byCourseID.ContainsKey(enrollment.Course)) _byCourseID.Add(enrollment.Course, new HashSet<EnrollmentID>());
+                // 2. Генерация ID и запись
+                var newId = _NextID();
+                enrollment.Id = newId;
+                _database.Add(newId, enrollment);
+
+                // 3. Индексы — без исключений
+                if (enrollment.Student is { } s) _insertStudent(s, newId);
+                if (enrollment.Teacher is { } t) _insertTeacher(t, newId);
+                if (enrollment.Group is { } g) _insertGroup(g, newId);
+
+                _byCourseID[enrollment.Course].Add(enrollment.Id);
+
+                return Task.FromResult(newId);
             }
         }
-        // Calling this function must be wrapped by mutex
-        private void _insertStudent(StudentID student_id, EnrollmentID id) {
-                if (!_byStudent.TryGetValue(student_id, out var value))
-                {
-                    _byStudent[student_id] = new HashSet<EnrollmentID>();
-                }
 
-                if (!_byStudent[student_id].Contains(id))
-                    value?.Add(id);
-                else
-                {
-                    throw new EntityAlreadyHasACourseError($"Student ({student_id}) already has a course with ID {_database[id].Course}");
-                }
+        private void _insertStudent(StudentID studentId, EnrollmentID id)
+        {
+            if (!_byStudent.TryGetValue(studentId, out var set))
+            {
+                set = new HashSet<EnrollmentID>();
+                _byStudent[studentId] = set;
+            }
+            set.Add(id);
         }
+
         // Calling this function must be wrapped by mutex
         private void _insertTeacher(TeacherID teacher_id, EnrollmentID id)
         {
@@ -110,7 +115,7 @@ namespace Course.Repositories
         {
             lock (_mutex)
             {
-                if (!this._byTeacher.ContainsKey(teacher_id)) throw new Teacher.Entities.Errors.TeacherDoesNotExists($"A student with ID {teacher_id} does not exists"); ;
+                if (!this._byTeacher.ContainsKey(teacher_id)) throw new Teacher.Entities.Errors.TeacherDoesNotExists($"A teacher with ID {teacher_id} does not exists"); ;
                 List<Enrollment> list = new List<Enrollment>();
                 foreach (var id in this._byTeacher[teacher_id].ToHashSet())
                 {
@@ -133,6 +138,17 @@ namespace Course.Repositories
                 return list;
             }
         }
+
+        public List<Enrollment> FindByCourseID(Course.Entities.CourseID course_id) {
+            lock (_mutex) {
+                if (!this._byCourseID.ContainsKey(course_id)) throw new Course.Entities.EnrollmentDoesNotExistsError($"An enrollment with course id ${course_id} does not exists");
+                List<Enrollment> list = new List<Enrollment>();
+                foreach (var id in this._byCourseID[course_id]) {
+                    list.Add(this._database[id]);
+                }
+                return list;
+            }
+        }
         public override Task<EnrollmentID> UpdateAsync(Enrollment enrollment_object) {
             throw new NotSupportedException($"A called function {MethodBase.GetCurrentMethod()?.Name} not supported for Enrollment. Use Delete and Create Other Enrollment");
         }
@@ -143,7 +159,6 @@ namespace Course.Repositories
             {
                 throw new Entities.EnrollmentDoesNotExistsError($"An Enrollment with id {enrollment_id} does not exists.");
             }
-            // Удаляем Enrollment записи из структур
             if (result.Teacher is not null)
             {
                 TeacherID teacher_id = result.Teacher;

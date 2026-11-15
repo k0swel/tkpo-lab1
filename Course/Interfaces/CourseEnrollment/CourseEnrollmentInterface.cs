@@ -15,5 +15,6 @@ namespace Course.Interfaces
         List<Enrollment> FindByStudentID(StudentID studentId);
         List<Enrollment> FindByTeacherID(TeacherID teacherID);
         List<Enrollment> FindByGroupID(GroupID groupID);
+        List<Enrollment> FindByCourseID(Course.Entities.CourseID courseID);
     }
 }

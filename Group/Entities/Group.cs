@@ -13,9 +13,10 @@ namespace Group.Entities
         public GroupState State { get; private set; }
         public GroupType Type { get; private set; }
 
-        public Group(GroupState State) {
-            this.Id = 0;
+        public Group(GroupState State, GroupType group_type) {
+            this.Id = "";
             this.State = State;
+            this.Type = group_type;
         }
         public void Disband() {
             if (this.State == GroupState.DISBANDED) {
@@ -42,7 +43,7 @@ namespace Group.Entities
             throw new NotImplementedException("operator + (GroupID, ulong) does not implemented");
         }
         public GroupID(GroupType type_group) {
-            string year = Convert.ToString(DateTime.UtcNow.Year)[0..2];
+            string year = Convert.ToString(DateTime.UtcNow.Year)[2..];
             switch (type_group) {
                 case GroupType.SPECIALITY:
                     this._value = $"{year}2-0";
@@ -53,10 +54,14 @@ namespace Group.Entities
                 case GroupType.MASTER:
                     this._value = $"{year}3-0";
                     break;
+                case GroupType.POSTGRADUATE:
+                    this._value = $"{year}4-0";
+                    break;
+                default:
+                    throw new IncorrectGroupTypeError($"Incorrect GroupType");
             }
-            throw new IncorrectGroupTypeError($"Incorrect GroupType");
+            
         }
-
         public static GroupID operator ++(GroupID groupId)
         {
             Match m = Regex.Match(groupId.ToString(), @"^(\d{3})-(\d+)$");
@@ -68,7 +73,7 @@ namespace Group.Entities
                 throw new OverflowException($"GroupID ({groupId}) counter overflow.");
 
             string primaryPart = m.Groups[1].Value;
-            string next = (number + 1).ToString(new string('0', m.Groups[2].Length)); // сохранить ширину
+            string next = (number + 1).ToString(new string('0', m.Groups[2].Length));
             return new GroupID($"{primaryPart}-{next}");
         }
         public static GroupID operator +(GroupID left, GroupID right) {
@@ -107,7 +112,7 @@ namespace Group.Entities
         DISBANDED,
     }
     public enum  GroupType {
-        BACHELOR,
+        BACHELOR = 1,
         SPECIALITY,
         MASTER,
         POSTGRADUATE

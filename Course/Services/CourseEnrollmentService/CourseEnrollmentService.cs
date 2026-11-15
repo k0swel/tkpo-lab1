@@ -68,6 +68,7 @@ namespace Course.Services
                 if (enroll.Course == course_id) {
                     var enrollment_id = enroll.Id;
                     await _enrollment_repository.DeleteAsync(enrollment_id);
+                    return;
                 }
             }
             throw new Entities.EnrollmentDoesNotExistsError($"An enrollment with student_id {student_id} and course_id {course_id} does not exists");
@@ -114,6 +115,7 @@ namespace Course.Services
                 {
                     var enrollment_id = enroll.Id;
                     await _enrollment_repository.DeleteAsync(enrollment_id);
+                    return;
                 }
             }
             throw new Entities.EnrollmentDoesNotExistsError($"An enrollment with teacher_id {teacher_id} and course_id {course_id} does not exists");
@@ -123,7 +125,7 @@ namespace Course.Services
         {
             // 1. Убеждаемся, что группа существует
             Group.Entities.Group? group = await this._group_repository.FindByIDAsync(group_id);
-            if (group is not null)
+            if (group is null)
             {
                 throw new Group.Entities.GroupDoesNotExistsError($"A group with id {group_id} does not exists");
             }
@@ -167,6 +169,12 @@ namespace Course.Services
                 return enrollment_object;
             }
             throw new EnrollmentDoesNotExistsError($"Enrollment with id({enrollment_id}) does not exists");
+        }
+
+        public Task<LinkedList<Entities.Enrollment>> FindByCourseID(Course.Entities.CourseID course_id)
+        {
+            var list = this._enrollment_repository.FindByCourseID(course_id);
+            return Task.FromResult(new LinkedList<Entities.Enrollment>(list));
         }
     }
 }

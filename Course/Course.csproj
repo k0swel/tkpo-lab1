@@ -13,8 +13,4 @@
     <ProjectReference Include="..\Teacher\Teacher.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Entities\CourseTranscript\" />
-  </ItemGroup>
-
 </Project>

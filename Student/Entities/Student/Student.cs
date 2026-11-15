@@ -41,6 +41,9 @@ namespace Student.Entities
             }
             throw new IncorrectStudentState($"Incorrect student state (StudentId = {this.Id}) during vacationing. Current state is {nameof(this.Status)}");
         }
+        public void Restore() {
+            this.Status = StudentStatus.ACTIVE;
+        }
         public void LeaveFromVacation()
         {
             if (this.Status == StudentStatus.VACATION)
@@ -58,6 +61,17 @@ namespace Student.Entities
         {
             this._value = Value;
         }
+        public StudentID(string string_value) {
+            ulong value;
+            try
+            {
+                value = Convert.ToUInt64(string_value);
+                this._value = value;
+            }
+            catch (FormatException ) {
+                throw new StudentIDIncorrectError($"Incorrect format for StudentID. Just pass digital identificator for student. E.g: 2");
+            }
+        }
         public StudentID()
         {
             this._value = 0;
@@ -73,6 +87,9 @@ namespace Student.Entities
         public static implicit operator StudentID(ulong value) {
             return new StudentID(value);
         }
+        public static implicit operator StudentID(string value) {
+            return new(value);
+        }
         public override string ToString()
         {
             return $"{this._value}";
@@ -80,7 +97,7 @@ namespace Student.Entities
 
     }
     public record StudentName(string firstName, string lastName, string? surName) : BaseRepositories.Entities.Name(firstName, lastName, surName) {
-        private static StudentName TryParse(string name)
+        public static StudentName TryParse(string name)
         {
             string[] splitted_text = name.Split(" ", 3);
             if (splitted_text.Length < 2)
@@ -100,6 +117,10 @@ namespace Student.Entities
         }
         public static implicit operator StudentName(string text) {
             return StudentName.TryParse(text);
+        }
+        public override string ToString()
+        {
+            return $"{LastName} {FirstName} {SurName}";
         }
     }
     public enum StudentStatus

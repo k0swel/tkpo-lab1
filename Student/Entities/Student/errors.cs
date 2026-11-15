@@ -11,4 +11,5 @@ namespace Student.Entities
     {
         public StudentDoesNotExistsError(string text) : base(text) { }
     }
+    public class StudentIDIncorrectError(string text) : Exception(text);
 }

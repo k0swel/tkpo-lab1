@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Text;
+
+
 namespace Course.Repositories
 {
-    public class InMemoryCourseRepository : BaseRepositories.InMemoryRepository<Entities.Course, Entities.CourseID>, Interfaces.ICourseRepository { };
+    public class InMemoryCourseRepository : BaseRepositories.InMemoryRepository<Course.Entities.Course, Course.Entities.CourseID>, Interfaces.ICourseRepository { };
     //public class InMemoryCourseRepository:  Interfaces.ICourseRepository
     //{
     //    private Dictionary<Entities.CourseID, Entities.Course> database = new Dictionary<Entities.CourseID, Entities.Course>();

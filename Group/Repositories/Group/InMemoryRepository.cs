@@ -9,13 +9,22 @@ namespace Group.Repositories
 {
     public class InMemoryGroupInRepository: BaseRepositories.InMemoryRepository<Entities.Group, Entities.GroupID>, Group.Interfaces.GroupRepositoryInterface
     {
+        private Dictionary<GroupType, GroupID> _ids = new Dictionary<GroupType, GroupID>();
         public InMemoryGroupInRepository()
         {
             this._database = new Dictionary<GroupID, Group.Entities.Group>();
             this._mutex = new Lock();
-            this._id = new GroupID("241-0");
+            foreach (var grouptype in Enum.GetValues(typeof(Group.Entities.GroupType))) {
+                this._ids.Add((GroupType)grouptype, new GroupID((GroupType)grouptype));
+            }
+            
+        }
+        private GroupID _NextID(GroupType group_type) {
+            _ids[group_type] = ++_ids[group_type];
+            return _ids[group_type];
         }
         public async override Task<Entities.GroupID> InsertAsync(Entities.Group group_object) {
+            group_object.Id = _NextID(group_object.Type);
             if (!await this.IsExistsAsync(group_object.Id))
             {
                 _database.Add(group_object.Id, group_object);
